@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Transaction, loadTransactions, calculateTotalSales, calculateTotalTransactions, calculateTotalQuantity, calculateAverageOrderValue } from '@/lib/data';
 import { formatCurrency } from '@/lib/currency';
 import { DollarSign, ShoppingCart, Package, TrendingUp } from 'lucide-react';
@@ -91,29 +91,6 @@ export const Home = () => {
           );
         })}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Información General</CardTitle>
-          <CardDescription>Datos del período 2024</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border-l-4 border-green-600 pl-4">
-              <p className="text-sm text-gray-600">Total de Ventas</p>
-              <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
-            </div>
-            <div className="border-l-4 border-blue-600 pl-4">
-              <p className="text-sm text-gray-600">Número de Transacciones</p>
-              <p className="text-2xl font-bold">{totalTransactions.toLocaleString('es-cl')}</p>
-            </div>
-            <div className="border-l-4 border-purple-600 pl-4">
-              <p className="text-sm text-gray-600">Unidades Vendidas</p>
-              <p className="text-2xl font-bold">{totalQuantity.toLocaleString('es-cl')}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
