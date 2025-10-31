@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
+import quarterOfYear from 'dayjs/plugin/quarterOfYear';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+dayjs.extend(quarterOfYear);
 import {
   LineChart,
   Line,
@@ -57,6 +61,26 @@ function getMonthlySales(transactions: Transaction[]): Array<{ month: string; sa
     }));
 }
 
+// Función para obtener ventas trimestrales
+function getQuarterlySales(transactions: Transaction[]): Array<{ month: string; sales: number }> {
+  const salesByQuarter: Record<string, number> = {};
+
+  transactions.forEach(t => {
+    const date = dayjs(t.Fecha);
+    const quarter = date.quarter();
+    const year = date.year();
+    const key = `${year}-Q${quarter}`;
+    salesByQuarter[key] = (salesByQuarter[key] || 0) + t.Total_Venta;
+  });
+
+  return Object.entries(salesByQuarter)
+    .sort(([quarterA], [quarterB]) => quarterA.localeCompare(quarterB))
+    .map(([quarter, sales]) => ({
+      month: quarter,
+      sales: parseFloat(sales.toFixed(2)),
+    }));
+}
+
 // Función para obtener top 5 productos por venta total
 function getTop5ProductsByRevenue(transactions: Transaction[]): Array<{ name: string; sales: number; quantity: number }> {
   const productMap: Record<string, { name: string; sales: number; quantity: number }> = {};
@@ -83,6 +107,7 @@ export const StatsPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState<string | null>(null);
+  const [salesView, setSalesView] = useState<'monthly' | 'quarterly'>('monthly');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -118,6 +143,8 @@ export const StatsPage = () => {
 
   // Prepare data
   const monthlySalesData = getMonthlySales(transactions);
+  const quarterlySalesData = getQuarterlySales(transactions);
+  const salesData = salesView === 'monthly' ? monthlySalesData : quarterlySalesData;
   const top5ProductsData = getTop5ProductsByRevenue(transactions);
   const paymentMethodData = getSalesByPaymentMethod(transactions);
 
@@ -140,24 +167,37 @@ export const StatsPage = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Ventas Totales Mensuales</CardTitle>
-            <CardDescription>Evolución de ventas mes a mes</CardDescription>
+            <CardTitle>Ventas Totales {salesView === 'monthly' ? 'Mensuales' : 'Trimestrales'}</CardTitle>
+            <CardDescription>
+              {salesView === 'monthly' ? 'Evolución de ventas mes a mes' : 'Evolución de ventas por trimestre'}
+            </CardDescription>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleExport('monthly-sales-chart', 'ventas-mensuales')}
-            disabled={exporting === 'monthly-sales-chart'}
-            className="bg-white border border-gray-300 hover:bg-gray-100 text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            {exporting === 'monthly-sales-chart' ? 'Exportando...' : 'Exportar'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select value={salesView} onValueChange={(value: 'monthly' | 'quarterly') => setSalesView(value)}>
+              <SelectTrigger size="sm" className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">Por Mes</SelectItem>
+                <SelectItem value="quarterly">Por Trimestre</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleExport('monthly-sales-chart', salesView === 'monthly' ? 'ventas-mensuales' : 'ventas-trimestrales')}
+              disabled={exporting === 'monthly-sales-chart'}
+              className="bg-white border border-gray-300 hover:bg-gray-100 text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {exporting === 'monthly-sales-chart' ? 'Exportando...' : 'Exportar'}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="w-full h-96" id="monthly-sales-chart">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlySalesData}>
+              <LineChart data={salesData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="month"
