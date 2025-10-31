@@ -152,23 +152,20 @@ export const StatsPage = () => {
   const categoryData = getSalesByCategory(transactions);
   const countryData = getSalesByCountry(transactions);
 
-  const paymentData = Object.entries(paymentMethodData)
-    .map(([name, value]) => ({
+  // Helper to transform data for charts
+  const transformToChartData = (data: Record<string, number>) =>
+    Object.entries(data).map(([name, value]) => ({
       name,
       value: parseFloat(value.toFixed(2)),
     }));
 
-  const categoryChartData = Object.entries(categoryData)
-    .map(([name, value]) => ({
-      name,
-      value: parseFloat(value.toFixed(2)),
-    }));
+  const paymentData = transformToChartData(paymentMethodData);
+  const categoryChartData = transformToChartData(categoryData);
+  const countryChartData = transformToChartData(countryData);
 
-  const countryChartData = Object.entries(countryData)
-    .map(([name, value]) => ({
-      name,
-      value: parseFloat(value.toFixed(2)),
-    }));
+  // Pre-calculate totals for percentage labels
+  const countryTotal = countryChartData.reduce((sum, p) => sum + p.value, 0);
+  const categoryTotal = categoryChartData.reduce((sum, p) => sum + p.value, 0);
 
   return (
     <div className="space-y-6">
@@ -387,7 +384,7 @@ export const StatsPage = () => {
                     cy="50%"
                     labelLine={false}
                     label={({ name, value }) =>
-                      `${name}: ${((value as number / countryChartData.reduce((sum, p) => sum + p.value, 0)) * 100).toFixed(1)}%`
+                      `${name}: ${((value as number / countryTotal) * 100).toFixed(1)}%`
                     }
                     outerRadius={100}
                     fill="#8884d8"
@@ -445,7 +442,7 @@ export const StatsPage = () => {
                     cy="50%"
                     labelLine={false}
                     label={({ name, value }) =>
-                      `${name}: ${((value as number / categoryChartData.reduce((sum, p) => sum + p.value, 0)) * 100).toFixed(1)}%`
+                      `${name}: ${((value as number / categoryTotal) * 100).toFixed(1)}%`
                     }
                     outerRadius={100}
                     fill="#8884d8"
