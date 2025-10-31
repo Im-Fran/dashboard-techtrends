@@ -26,6 +26,8 @@ import {
   Transaction,
   loadTransactions,
   getSalesByPaymentMethod,
+  getSalesByCategory,
+  getSalesByCountry,
 } from '@/lib/data';
 import { formatCurrency } from '@/lib/currency';
 import { exportChartAsImage } from '@/lib/export';
@@ -147,8 +149,22 @@ export const StatsPage = () => {
   const salesData = salesView === 'monthly' ? monthlySalesData : quarterlySalesData;
   const top5ProductsData = getTop5ProductsByRevenue(transactions);
   const paymentMethodData = getSalesByPaymentMethod(transactions);
+  const categoryData = getSalesByCategory(transactions);
+  const countryData = getSalesByCountry(transactions);
 
   const paymentData = Object.entries(paymentMethodData)
+    .map(([name, value]) => ({
+      name,
+      value: parseFloat(value.toFixed(2)),
+    }));
+
+  const categoryChartData = Object.entries(categoryData)
+    .map(([name, value]) => ({
+      name,
+      value: parseFloat(value.toFixed(2)),
+    }));
+
+  const countryChartData = Object.entries(countryData)
     .map(([name, value]) => ({
       name,
       value: parseFloat(value.toFixed(2)),
@@ -318,6 +334,124 @@ export const StatsPage = () => {
                     dataKey="value"
                   >
                     {paymentData.map((_entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '2px solid #000',
+                      borderRadius: '4px',
+                      padding: '8px 12px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      fontSize: '12px'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales by Country Chart */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Distribución de Ventas por País</CardTitle>
+              <CardDescription>Proporción de ventas por ubicación</CardDescription>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleExport('sales-by-country-chart', 'ventas-por-pais')}
+              disabled={exporting === 'sales-by-country-chart'}
+              className="bg-white border border-gray-300 hover:bg-gray-100 text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {exporting === 'sales-by-country-chart' ? 'Exportando...' : 'Exportar'}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-80" id="sales-by-country-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={countryChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) =>
+                      `${name}: ${((value as number / countryChartData.reduce((sum, p) => sum + p.value, 0)) * 100).toFixed(1)}%`
+                    }
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {countryChartData.map((_entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '2px solid #000',
+                      borderRadius: '4px',
+                      padding: '8px 12px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      fontSize: '12px'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Sales by Category Chart */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Distribución de Ventas por Categoría</CardTitle>
+              <CardDescription>Proporción de ventas por tipo de producto</CardDescription>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleExport('sales-by-category-chart', 'ventas-por-categoria')}
+              disabled={exporting === 'sales-by-category-chart'}
+              className="bg-white border border-gray-300 hover:bg-gray-100 text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {exporting === 'sales-by-category-chart' ? 'Exportando...' : 'Exportar'}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-80" id="sales-by-category-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) =>
+                      `${name}: ${((value as number / categoryChartData.reduce((sum, p) => sum + p.value, 0)) * 100).toFixed(1)}%`
+                    }
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {categoryChartData.map((_entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={COLORS[index % COLORS.length]}
